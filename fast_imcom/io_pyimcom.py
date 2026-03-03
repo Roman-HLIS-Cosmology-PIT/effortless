@@ -23,7 +23,7 @@ class FConfig(Config):
         PSFModel.SAMP = 6
         PSFModel.NTOT = PSFModel.NPIX * PSFModel.SAMP
         PSFModel.YXCTR = (PSFModel.NTOT-1) / 2
-        PSFModel.BL_CIRC = 47
+        PSFModel.BL_CIRC = 57
 
         InSlice.NLAYER = self.n_inframe
         assert self.pad_sides in ["all", "none"], \

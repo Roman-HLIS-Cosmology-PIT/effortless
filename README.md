@@ -1,5 +1,6 @@
-# Fast IMCOM: Efficient Optimal Image Coaddition
+# Effortless: EFFicient Optimal image ReconsTruction using LESS memory
+Also known as Fast IMCOM (IMage COMbination)
 
-Mathematical proof of concept: [K. Cao (2025)](https://ui.adsabs.harvard.edu/abs/2025arXiv251016110C/abstract)
+Mathematical proof of concept: [K. Cao (2026)](https://ui.adsabs.harvard.edu/abs/2026AJ....171..140C/abstract)
 
 Practical implementation: under development

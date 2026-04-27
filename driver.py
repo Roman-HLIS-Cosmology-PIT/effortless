@@ -3,8 +3,8 @@ import glob
 import numpy as np
 from astropy.io import fits
 
-from fast_imcom.psfutil import PSFModel
-from fast_imcom.io_general import InSlice, OutSlice
+from effortless.psfutil import PSFModel
+from effortless.io_general import InSlice, OutSlice
 
 
 psf_in = np.zeros((PSFModel.NTOT, PSFModel.NTOT))

@@ -3,8 +3,8 @@ import warnings; warnings.filterwarnings("ignore")
 
 import numpy as np
 
-from fast_imcom.io_pyimcom import FConfig, PyOutSlice
-from fast_imcom.psfutil import SubSlice
+from effortless.io_pyimcom import FConfig, PyOutSlice
+from effortless.psfutil import SubSlice
 
 
 cfg = FConfig("../pyimcom_hack_2025Aug4/config_test25-F.json")
@@ -27,7 +27,7 @@ cfg.psfsplit = ""
 # cfg.stoptile = 4
 cfg.stoptile = np.inf
 
-cfg.configure_fast_imcom()
+cfg.configure_effortless()
 PyOutSlice.SAVE_ALL = True
 # PyOutSlice.SIGMA *= 1.2
 # SubSlice.ACCEPT = 16

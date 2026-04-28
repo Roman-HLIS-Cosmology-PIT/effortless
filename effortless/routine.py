@@ -23,17 +23,15 @@ def bandlimited_rfft2(arr: np.array, bl: int) -> np.array:
 
     Parameters
     ----------
-    arr : np.array
+    arr : np.array, shape: `(nf, ny, nx)`, dtype: ``float``
         Array of `nf` functions of shape `(ny, nx)` to be FFT'ed.
-        shape : `(nf, ny, nx)`, dtype : ``float``
     bl : int
         The bandlimit. Only modes between `-bl` and `bl` will be saved.
 
     Returns
     -------
-    np.array
+    np.array, shape: `(nf, bl*2, bl+1)`, dtype: ``complex``
         Array of `nf` sets of forward real FFT results.
-        shape : `(nf, bl*2, bl+1)`, dtype : ``complex``
 
     """
 
@@ -46,19 +44,17 @@ def bandlimited_irfft2(rft: np.array, ny: int, nx: int, wd: int = 0) -> np.array
 
     Parameters
     ----------
-    rft : np.array
+    rft : np.array, shape: `(nf, bl*2, bl+1)`, dtype: ``complex``
         Array of `nf` sets of forward real FFT results.
-        shape : `(nf, bl*2, bl+1)`, dtype : ``complex``
     ny, nx : int, int
-        Shape of functions to be recovered via inverse FFT.
+        Original shape of functions to be recovered via inverse FFT.
     wd : int, default: 0
         Half window size in real space. If 0, no window is applied.
 
     Returns
     -------
-    np.array
+    np.array, shape: `(nf, ny, nx)` or `(nf, wd*2, wd*2)`, dtype: ``float``
         Array of `nf` functions of shape `(ny, nx)` or `(wd*2, wd*2)` from inverse FFT.
-        shape : `(nf, ny, nx)` or `(nf, wd*2, wd*2)`, dtype : ``float``
 
     """
 
@@ -75,7 +71,7 @@ def bandlimited_irfft2(rft: np.array, ny: int, nx: int, wd: int = 0) -> np.array
         ift_x = np.fft.irfft(np.concatenate(
             [np.concatenate([ift_y[:, :wd, :], ift_y[:, -wd:, :]], axis=-2),
              np.zeros((nf, wd*2, nx//2-bl_plus1))], axis=-1), n=nx)
-        return np.concatenate([ift_x[:, :, :wd], ift_x[:, :, -wd:]], axis=-1).copy()
+        return np.concatenate([ift_x[:, :, :wd], ift_x[:, :, -wd:]], axis=-1)
 
 
 @njit
@@ -84,9 +80,8 @@ def iD5512C_getw(w: np.array, fh: float) -> None:
 
     Parameters
     ----------
-    w : np.array
+    w : np.array, shape: (10,), dtype: ``float``
         Interpolation weights in one direction.
-        shape : (10,), dtype : ``float``
     fh : float
         `xfh` or `yfh` with 1/2 subtracted.
 
@@ -136,18 +131,16 @@ def reggridD5512C(infunc: np.array, x0: float, y0: float, SAMP: int,
 
     Parameters
     ----------
-    infunc : np.array
+    infunc : np.array, shape: `(ny, nx)`, dtype: ``float``
         Input function on some grid.
-        shape : `(ny, nx)`, dtype : ``float``
     x0, y0 : float, float
         Central output point in the input grid.
     SAMP : int
         Oversampling rate of PSF arrays.
     ACCEPT : int
         Acceptance radius in native pixels.
-    out_arr : np.array
+    out_arr : np.array, shape: `(ACCEPT*2, ACCEPT*2)`, dtype: ``float``
         Output array to be filled with interpolated values.
-        shape : `(ACCEPT*2, ACCEPT*2)`, dtype : ``float``
     circ_cut : bool, default: False
         Whether to apply a circular cut to the interpolation region.
 
@@ -197,15 +190,12 @@ def apply_mask_threshold(mask_out: np.array, inmask: np.array,
 
     Parameters
     ----------
-    mask_out : np.array
+    mask_out : np.array, shape: `(NPIX_SUB**2,)`, dtype: ``bool``
         Mask of output pixels to be updated.
-        shape : `(NPIX_SUB**2,)`, dtype : ``bool``
-    inmask : np.array
+    inmask : np.array, shape: `(y_max-y_min+1, x_max-x_min+1)`, dtype: ``bool``
         Mask of input pixels.
-        shape : `(y_max-y_min+1, x_max-x_min+1)`, dtype : ``bool``
-    inxys_int : np.array
+    inxys_int : np.array, shape: `(NPIX_SUB**2, 2)`, dtype: ``int``
         Integer part of output pixel coordinates in the input pixel plane.
-        shape : `(NPIX_SUB**2, 2)`, dtype : ``int``
     MASK_THR : int
         Threshold for number of masked input pixels.
     ACCEPT_ : int, default: 8
@@ -235,18 +225,14 @@ def compute_weights(weights: np.array, mask_out: np.array, weight: np.array,
 
     Parameters
     ----------
-    weights : np.array
+    weights : np.array, shape: `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype: ``float``
         Array to be filled with reconstruction weights for input pixels.
-        shape : `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype : ``float``
-    mask_out : np.array
+    mask_out : np.array, shape: `(NPIX_SUB**2,)`, dtype: ``bool``
         Flattened mask of output pixels.
-        shape : `(NPIX_SUB**2,)`, dtype : ``bool``
-    weight : np.array
+    weight : np.array, shape: `(NTOT, NTOT)` or as needed, dtype: ``float``
         Weight field based on input and target output PSFs.
-        shape : `(NTOT, NTOT)` or as needed, dtype : ``float``
-    inxys_frac : np.array
+    inxys_frac : np.array, shape: `(NPIX_SUB**2, 2)`, dtype: ``float``
         Fractional part of output pixel coordinates in the input pixel plane.
-        shape : `(NPIX_SUB**2, 2)`, dtype : ``float``
     YXCTR : float
         Center of the weight field in each direction.
     SAMP : int
@@ -275,18 +261,14 @@ def adjust_weights(weights: np.array, mask_out: np.array, inmask: np.array,
 
     Parameters
     ----------
-    weights : np.array
+    weights : np.array, shape: `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype: ``float``
         Array of reconstruction weights for input pixels to be updated.
-        shape : `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype : ``float``
-    mask_out : np.array
+    mask_out : np.array, shape: `(NPIX_SUB**2,)`, dtype: ``bool``
         Flattened mask of output pixels.
-        shape : `(NPIX_SUB**2,)`, dtype : ``bool``
-    inmask : np.array
+    inmask : np.array, shape: `(y_max-y_min+1, x_max-x_min+1)`, dtype: ``bool``
         Mask of input pixels.
-        shape : `(y_max-y_min+1, x_max-x_min+1)`, dtype : ``bool``
-    inxys_int : np.array
+    inxys_int : np.array, shape: `(NPIX_SUB**2, 2)`, dtype: ``int``
         Integer part of output pixel coordinates in the input pixel plane.
-        shape : `(NPIX_SUB**2, 2)`, dtype : ``int``
     ACCEPT : int
         Acceptance radius in native pixels.
     NDIFF : int, default: 5
@@ -337,21 +319,16 @@ def apply_weights(weights: np.array, mask_out: np.array, outdata: np.array,
 
     Parameters
     ----------
-    weights : np.array
+    weights : np.array, shape: `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype: ``float``
         Array of reconstruction weights for input pixels.
-        shape : `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype : ``float``
-    mask_out : np.array
+    mask_out : np.array, shape: `(NPIX_SUB**2,)`, dtype: ``bool``
         Flattened mask of output pixels.
-        shape : `(NPIX_SUB**2,)`, dtype : ``bool``
-    outdata : np.array
+    outdata : np.array, shape: `(NLAYER, NPIX_SUB, NPIX_SUB)`, dtype: ``float``
         Array to be filled with output data.
-        shape : `(NLAYER, NPIX_SUB, NPIX_SUB)`, dtype : ``float``
-    indata : np.array
+    indata : np.array, shape: `(NLAYER, y_max-y_min+1, x_max-x_min+1)`, dtype: ``float``
         Array of input data.
-        shape : `(NLAYER, y_max-y_min+1, x_max-x_min+1)`, dtype : ``float``
-    inxys_int : np.array
+    inxys_int : np.array, shape: `(NPIX_SUB**2, 2)`, dtype: ``int``
         Integer part of output pixel coordinates in the input pixel plane.
-        shape : `(NPIX_SUB**2, 2)`, dtype : ``int``
     ACCEPT : int
         Acceptance radius in native pixels.
 

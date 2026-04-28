@@ -64,9 +64,8 @@ class InSlice:
 
         Attributes
         ----------
-        inxy_min : np.array
+        inxy_min : np.array, shape: `(2,)`, dtype: ``int``
             Minimum input pixel coordinates of the slice.
-            shape : `(2,)`, dtype : ``int``
 
         """
 
@@ -103,12 +102,10 @@ class InSlice:
 
         Attributes
         ----------
-        data : np.array
+        data : np.array, shape: `(NLAYER, NSIDE, NSIDE)`, dtype: ``float``
             Input data array.
-            shape : `(NLAYER, NSIDE, NSIDE)`, dtype : ``float``
-        mask : np.array
+        mask : np.array, shape: `(NSIDE, NSIDE)`, dtype: ``bool``
             Input mask array.
-            shape : `(NSIDE, NSIDE)`, dtype : ``bool``
 
         """
 
@@ -141,15 +138,13 @@ class InSlice:
 
         Parameters
         ----------
-        outxys : np.array
+        outxys : np.array, shape: `(N, 2)`, dtype: ``float``
             Output pixel coordinates.
-            shape : `(N, 2)`, dtype : ``float``
 
         Returns
         -------
-        np.array
+        np.array, shape: `(N, 2)`, dtype: ``float``
             Input pixel coordinates.
-            shape : `(N, 2)`, dtype : ``float``
 
         """
 
@@ -161,15 +156,13 @@ class InSlice:
 
         Parameters
         ----------
-        inxys : np.array
+        inxys : np.array, shape: `(N, 2)`, dtype: ``float``
             Input pixel coordinates.
-            shape : `(N, 2)`, dtype : ``float``
 
         Returns
         -------
-        np.array
+        np.array, shape: `(N, 2)`, dtype: ``float``
             Output pixel coordinates.
-            shape : `(N, 2)`, dtype : ``float``
 
         """
 
@@ -186,9 +179,8 @@ class InSlice:
 
         Attributes
         ----------
-        mask_out : np.array
+        mask_out : np.array, shape: `(NPIX_TOT, NPIX_TOT)`, dtype: ``bool``
             Mask for output pixels.
-            shape : `(NPIX_TOT, NPIX_TOT)`, dtype : ``bool``
         is_relevant : bool
             Whether the input slice overlaps with the output slice at all.
 
@@ -282,9 +274,8 @@ class InSlice:
 
         Returns
         -------
-        np.array
+        np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             PSF array at the given coordinates.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
 
         """
 
@@ -301,10 +292,9 @@ class InSlice:
 
         Returns
         -------
-        tuple[np.array, np.array]
+        tuple[np.array, shape: `(NLAYER, y_max-y_min+1, x_max-x_min+1)`, dtype: ``float``,
+              np.array, shape: `(y_max-y_min+1, x_max-x_min+1)`, dtype: ``bool``]
             Data and mask arrays for the specified region.
-            data shape : `(NLAYER, y_max-y_min+1, x_max-x_min+1)`, dtype : ``float``
-            mask shape : `(y_max-y_min+1, x_max-x_min+1)`, dtype : ``bool``
 
         """
 
@@ -357,9 +347,8 @@ class OutSlice:
 
         Parameters
         ----------
-        outcrval : np.array
+        outcrval : np.array, shape: `(2,)`, dtype: ``float``
             World coordinates at the reference pixel.
-            shape : `(2,)`, dtype : ``float``
         outcrpix : list[float, float], default: None
             Pixel coordinates of the reference pixel.
             If None, set to the center of the output slice.
@@ -398,10 +387,9 @@ class OutSlice:
             Pixel scale in degrees.
         ninslice : int
             Number of relevant input slices.
-        data : np.array
+        data : np.array, shape: `(NLAYER, NPIX_TOT, NPIX_TOT)` or
+                                `(NLAYER, ninslice, NPIX_TOT, NPIX_TOT)`, dtype: ``float``
             Output data array.
-            shape : `(NLAYER, NPIX_TOT, NPIX_TOT)`, dtype : ``float`` or
-                    `(NLAYER, ninslice, NPIX_TOT, NPIX_TOT)`, dtype : ``float``
 
         """
 
@@ -438,9 +426,8 @@ class OutSlice:
 
         Attributes
         ----------
-        mask : np.array
+        mask : np.array, shape: `(ninslice, NPIX_TOT, NPIX_TOT)`, dtype: ``bool``
             Combination of masks from input slices.
-            shape : `(ninslice, NPIX_TOT, NPIX_TOT)`, dtype : ``bool``
 
         """
 

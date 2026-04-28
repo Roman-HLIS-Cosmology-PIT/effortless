@@ -65,7 +65,6 @@ class PSFModel:
         "K213": 2.4 / SIGMA_TO_FWHM,
     }  # From pyimcom/configs/production_configs_spring2024.
 
-
     @classmethod
     def psf_gaussian(cls, sigma: float, dout_din: np.array = np.diag(np.ones(2))) -> np.array:
         """Generate a 2D Gaussian PSF.
@@ -74,15 +73,14 @@ class PSFModel:
         ----------
         sigma : float
             Sigma of the Gaussian PSF in native pixels.
-        dout_din : np.array, default: np.diag(np.ones(2))
+        dout_din : np.array, shape: `(2, 2)`, dtype: ``float``,
+                   default: np.diag(np.ones(2))
             Distortion matrix for converting input to output pixel coordinates.
-            shape : `(2, 2)`, dtype : ``float``
 
         Returns
         -------
-        np.array
+        np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             2D Gaussian PSF array, normalized in the output pixel plane.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
 
         """
 
@@ -98,15 +96,13 @@ class PSFModel:
 
         Parameters
         ----------
-        psf : np.array
+        psf : np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             2D PSF array in the input pixel plane.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
 
         Returns
         -------
-        np.array
+        np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             Pixelated PSF array in the input pixel plane.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
 
         """
 
@@ -121,20 +117,17 @@ class PSFModel:
 
         Parameters
         ----------
-        psf_in : np.array
+        psf_in : np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             Input PSF in the input pixel plane.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
-        psf_out : np.array
+        psf_out : np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             Target output PSF in the input pixel plane.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
         wd : int, default: 0
             Half window size in real space. If 0, no window is applied.
 
         Returns
         -------
-        np.array
+        np.array, shape: `(NTOT, NTOT)` or `(wd*2, wd*2)`, dtype: ``float``
             Weight field in the input pixel plane.
-            shape : `(NTOT, NTOT)` or `(wd*2, wd*2)`, dtype : ``float``
 
         """
 
@@ -158,9 +151,8 @@ class PSFModel:
 
         Parameters
         ----------
-        psfdata : np.array
+        psfdata : np.array, shape: `(NTOT, NTOT)` or as needed, dtype: ``float``
             PSF data array.
-            shape : `(NTOT, NTOT)` or as needed, dtype : ``float``
 
         Returns
         -------
@@ -180,10 +172,9 @@ class PSFModel:
 
         Returns
         -------
-        np.array
+        np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             PSF array at the given coordinates.
             In the base class, this is just the input PSF data.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
 
         """
 
@@ -239,9 +230,8 @@ class SubSlice:
 
         Returns
         -------
-        np.array
+        np.array, shape: `(2, 2)`, dtype: ``float``
             Jacobian matrix of world coordinates with respect to pixel coordinates.
-            shape : `(2, 2)`, dtype : ``float``
 
         """
 
@@ -261,12 +251,10 @@ class SubSlice:
 
         Attributes
         ----------
-        outxys : np.array
+        outxys : np.array, shape: `(NPIX_SUB**2, 2)`, dtype: ``float``
             Output pixel coordinates in the output pixel plane.
-            shape : `(NPIX_SUB**2, 2)`, dtype : ``float``
-        ctr : np.array
+        ctr : np.array, shape: `(2,)`, dtype: ``float``
             Center of the subslice in the output pixel plane.
-            shape : `(2,)`, dtype : ``float``
 
         """
 

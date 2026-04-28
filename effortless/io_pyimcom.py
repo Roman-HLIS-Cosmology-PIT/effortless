@@ -95,9 +95,8 @@ class PyPSFModel(PSFModel):
 
         Returns
         -------
-        np.array
+        np.array, shape: `(NTOT, NTOT)`, dtype: ``float``
             PSF array at the given coordinates.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
 
         """
 
@@ -171,12 +170,10 @@ class PyInSlice(InSlice):
             WCS object for the input slice.
         scale : float
             Pixel scale in degrees.
-        data : np.array
+        data : np.array, shape: `(NLAYER, NSIDE, NSIDE)`, dtype: ``float``
             Input data array.
-            shape : `(NLAYER, NSIDE, NSIDE)`, dtype : ``float``
-        mask : np.array
+        mask : np.array, shape: `(NSIDE, NSIDE)`, dtype: ``bool``
             Input mask array.
-            shape : `(NSIDE, NSIDE)`, dtype : ``bool``
 
         """
 
@@ -193,7 +190,7 @@ class PyInSlice(InSlice):
         else:
             self.mask = np.ones((Stn.sca_nside, Stn.sca_nside), dtype=bool)
 
-        get_all_data(self.inimage)  # shape : (n_inframe, Stn.sca_nside, Stn.sca_nside)
+        get_all_data(self.inimage)  # shape: (n_inframe, Stn.sca_nside, Stn.sca_nside)
         self.data = self.inimage.indata
 
         cr_mask = Mask.load_cr_mask(self.inimage)

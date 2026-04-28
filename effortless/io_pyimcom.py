@@ -62,10 +62,11 @@ class EConfig(Config):
         PSFModel.BL_CIRC = bl_circ
 
         InSlice.NLAYER = self.n_inframe
-        assert self.pad_sides in ["all", "none"], \
-            'PADSIDES: Effortless only supports "all" and "none".'
         OutSlice.NSUB, OutSlice.NPIX_SUB, OutSlice.CDELT =\
             self.n1P//2, self.n2*2, self.dtheta
+        assert self.pad_sides in ["all", "none"], \
+            'PADSIDES: Effortless only supports "all" and "none".'
+        if self.pad_sides == "none": OutSlice.NSUB = self.n1//2
         OutSlice.NPIX_TOT = OutSlice.NSUB * OutSlice.NPIX_SUB
 
         assert self.n_out == 1, "NOUT: Effortless only supports 1."
@@ -164,21 +165,29 @@ class PyInSlice(InSlice):
 
         """
 
+        print("input image", self.inimage.idsca)
         self.wcs = self.inimage.inwcs.obj
         self.scale = Stn.pixscale_native / Stn.degree
 
-        print("input image", self.inimage.idsca)
-        get_all_data(self.inimage)
-        self.data = self.inimage.indata
-        print()
+        # Load masks here.
+        if self.blk.pmask is not None:
+            self.mask = self.blk.pmask[self.idsca[1]-1]
+        else:
+            self.mask = np.ones((Stn.sca_nside, Stn.sca_nside), dtype=bool)
 
-        cfg = self.blk.cfg  # Shortcut.
-        # assert cfg.permanent_mask is None and cfg.cr_mask_rate == 0.0
-        # Temporarily exclude `L2_2506` input masks
-        # self.mask = np.ones((InSlice.NSIDE, InSlice.NSIDE), dtype=bool)
-        # self.data[0] *= Mask.load_mask_from_maskfile(cfg, self.blk.obsdata, self.idsca)
-        self.mask = Mask.load_mask_from_maskfile(cfg, self.blk.obsdata, self.idsca)
-        del self.blk, self.inimage
+        get_all_data(self.inimage)  # shape : (n_inframe, Stn.sca_nside, Stn.sca_nside)
+        self.data = self.inimage.indata
+
+        cr_mask = Mask.load_cr_mask(self.inimage)
+        if cr_mask is not None:
+            self.mask = np.logical_and(self.mask, cr_mask)
+        del cr_mask, self.inimage
+
+        # Extract mask from file.
+        self.mask &= Mask.load_mask_from_maskfile(self.blk.cfg, self.blk.obsdata, self.idsca)
+        # Temporarily exclude `L2_2506` input masks.
+        # self.data[0] *= Mask.load_mask_from_maskfile(self.blk.cfg, self.blk.obsdata, self.idsca)
+        del self.blk
 
 
 class PyOutSlice(OutSlice):
@@ -221,6 +230,8 @@ class PyOutSlice(OutSlice):
         self.process_input_images()
 
         inslices = [PyInSlice(self.blk, idsca) for idsca in self.blk.obslist]
+        if self.cfg.pad_sides == "none": 
+            self.blk.outwcs.wcs.crpix -= self.cfg.postage_pad * self.cfg.n2
         super().__init__(self.blk.outwcs, inslices, timing)
         del self.blk
 

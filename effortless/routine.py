@@ -41,7 +41,7 @@ def bandlimited_rfft2(arr: np.array, bl: int) -> np.array:
     return np.concatenate([rft[:, :bl, :], rft[:, -bl:, :]], axis=-2)
 
 
-def bandlimited_irfft2(rft: np.array, ny: int, nx: int) -> np.array:
+def bandlimited_irfft2(rft: np.array, ny: int, nx: int, wd: int = 0) -> np.array:
     """Bandlimited inverse real FFT in 2D.
 
     Parameters
@@ -51,20 +51,31 @@ def bandlimited_irfft2(rft: np.array, ny: int, nx: int) -> np.array:
         shape : `(nf, bl*2, bl+1)`, dtype : ``complex``
     ny, nx : int, int
         Shape of functions to be recovered via inverse FFT.
+    wd : int, default: 0
+        Half window size in real space. If 0, no window is applied.
 
     Returns
     -------
     np.array
-        Array of `nf` functions of shape `(ny, nx)` from inverse FFT.
-        shape : `(nf, ny, nx)`, dtype : ``float``
+        Array of `nf` functions of shape `(ny, nx)` or `(wd*2, wd*2)` from inverse FFT.
+        shape : `(nf, ny, nx)` or `(nf, wd*2, wd*2)`, dtype : ``float``
 
     """
 
     nf, bl_times2, bl_plus1 = rft.shape; bl = bl_plus1 - 1
-    return np.fft.irfft(np.concatenate([np.fft.ifft(np.concatenate(
-        [rft[:, :bl, :], np.zeros((nf, ny-bl_times2, bl_plus1), dtype=complex),
-         rft[:, -bl:, :]], axis=-2), axis=-2),
-         np.zeros((nf, ny, nx//2-bl_plus1))], axis=-1), n=nx)
+    if wd == 0:
+        return np.fft.irfft(np.concatenate([np.fft.ifft(np.concatenate(
+            [rft[:, :bl, :], np.zeros((nf, ny-bl_times2, bl_plus1), dtype=complex),
+             rft[:, -bl:, :]], axis=-2), axis=-2),
+             np.zeros((nf, ny, nx//2-bl_plus1))], axis=-1), n=nx)
+    else:
+        ift_y = np.fft.ifft(np.concatenate(
+            [rft[:, :bl, :], np.zeros((nf, ny-bl_times2, bl_plus1), dtype=complex),
+             rft[:, -bl:, :]], axis=-2), axis=-2)
+        ift_x = np.fft.irfft(np.concatenate(
+            [np.concatenate([ift_y[:, :wd, :], ift_y[:, -wd:, :]], axis=-2),
+             np.zeros((nf, wd*2, nx//2-bl_plus1))], axis=-1), n=nx)
+        return np.concatenate([ift_x[:, :, :wd], ift_x[:, :, -wd:]], axis=-1).copy()
 
 
 @njit

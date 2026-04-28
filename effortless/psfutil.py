@@ -116,7 +116,7 @@ class PSFModel:
             np.sinc(k[None, :cls.NTOT//2+1]) * np.sinc(k[:, None]), s=(cls.NTOT, cls.NTOT))
 
     @classmethod
-    def get_weight_field(cls, psf_in: np.array, psf_out: np.array) -> np.array:
+    def get_weight_field(cls, psf_in: np.array, psf_out: np.array, wd: int = 0) -> np.array:
         """Compute the weight field based on given PSFs.
 
         Parameters
@@ -127,12 +127,14 @@ class PSFModel:
         psf_out : np.array
             Target output PSF in the input pixel plane.
             shape : `(NTOT, NTOT)`, dtype : ``float``
+        wd : int, default: 0
+            Half window size in real space. If 0, no window is applied.
 
         Returns
         -------
         np.array
             Weight field in the input pixel plane.
-            shape : `(NTOT, NTOT)`, dtype : ``float``
+            shape : `(NTOT, NTOT)` or `(wd*2, wd*2)`, dtype : ``float``
 
         """
 
@@ -149,7 +151,7 @@ class PSFModel:
             weight_tbl[dv+1:bl_int*2-dv, du] = 0
 
         return np.fft.ifftshift(bandlimited_irfft2(
-            weight_tbl[None], cls.NTOT, cls.NTOT))[0] * cls.SAMP**2
+            weight_tbl[None], cls.NTOT, cls.NTOT, wd))[0] * cls.SAMP**2
 
     def __init__(self, psfdata: np.array) -> None:
         """Initialize the (input) PSF model with given PSF data.
@@ -305,10 +307,10 @@ class SubSlice:
             psf_out = PSFModel.psf_gaussian(sigma, dout_din=np.linalg.inv(
                 SubSlice.get_dworld_dpixel(self.outslice, *self.ctr)) @\
                 SubSlice.get_dworld_dpixel(inslice, *ctr_in))
-            weight = PSFModel.get_weight_field(psf_in, psf_out)
+            wd = self.ACCEPT * PSFModel.SAMP + 6
             # In principle we should flip the input PSF, but
             # in practice it is easier to flip the weight field.
-            weight[1:, 1:] = np.flip(weight[1:, 1:])
+            weight = PSFModel.get_weight_field(psf_in, psf_out, wd)[:0:-1, :0:-1].copy()
 
             # Convert output to input pixel coordinates.
             inxys = inslice.outpix2world2inpix(self.outxys)
@@ -327,7 +329,7 @@ class SubSlice:
             # Compute and adjust reconstruction weights for input pixels.
             weights = np.zeros((NPIX_SUB**2, self.ACCEPT*2, self.ACCEPT*2))
             compute_weights(weights, mask_out.ravel(), weight, inxys_frac,
-                            PSFModel.NTOT/2, PSFModel.SAMP, self.ACCEPT)
+                            wd-1, PSFModel.SAMP, self.ACCEPT)
             adjust_weights(weights, mask_out.ravel(), inmask, inxys_int,
                            self.ACCEPT, self.NDIFF, self.RENORM)
 

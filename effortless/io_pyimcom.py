@@ -118,7 +118,7 @@ class PyInSlice(InSlice):
     """
 
     def __init__(self, blk: Block, idsca: tuple[int, int],
-                 loaddata: bool = True, paddata: bool = False) -> None:
+                 loaddata: bool = False, paddata: bool = False) -> None:
         """Initialize the input image slice.
 
         Parameters
@@ -127,7 +127,7 @@ class PyInSlice(InSlice):
             Block object from PyIMCOM.
         idsca : tuple[int, int]
             Observation ID and SCA number.
-        loaddata : bool, default: True
+        loaddata : bool, default: False
             Whether to load the input data.
         paddata : bool, default: False
             Whether to pad the input data.
@@ -147,6 +147,21 @@ class PyInSlice(InSlice):
             psfmodel = PyPSFModel(f[idsca[1]].data)
         super().__init__(self.inimage.infile, psfmodel, loaddata, paddata)
 
+    def load_wcs(self) -> None:
+        """Load the WCS for the input slice.
+
+        Attributes
+        ----------
+        wcs : wcs.WCS
+            WCS object for the input slice.
+        scale : float
+            Pixel scale in degrees.
+
+        """
+
+        self.wcs = self.inimage.inwcs.obj
+        self.scale = Stn.pixscale_native / Stn.degree
+
     def load_data_and_mask(self) -> None:
         """Load the input data and mask.
 
@@ -164,6 +179,9 @@ class PyInSlice(InSlice):
             shape : `(NSIDE, NSIDE)`, dtype : ``bool``
 
         """
+
+        if all(hasattr(self, attr) for attr in
+               ["wcs", "scale", "data", "mask"]): return
 
         print("input image", self.inimage.idsca)
         self.wcs = self.inimage.inwcs.obj

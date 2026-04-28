@@ -123,8 +123,8 @@ def reggridD5512C(infunc: np.array, x0: float, y0: float, SAMP: int,
                   ACCEPT: int, out_arr: np.array, circ_cut: bool = False) -> None:
     """iD5512C interpolation for output points on a regular grid.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     infunc : np.array
         Input function on some grid.
         shape : `(ny, nx)`, dtype : ``float``
@@ -222,8 +222,8 @@ def compute_weights(weights: np.array, mask_out: np.array, weight: np.array,
                     inxys_frac: np.array, YXCTR: float, SAMP: int, ACCEPT: int) -> None:
     """Compute reconstruction weights for input pixels.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     weights : np.array
         Array to be filled with reconstruction weights for input pixels.
         shape : `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype : ``float``
@@ -262,8 +262,8 @@ def adjust_weights(weights: np.array, mask_out: np.array, inmask: np.array,
                    RENORM: bool = False) -> None:
     """Adjust reconstruction weights in light of input pixel mask.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     weights : np.array
         Array of reconstruction weights for input pixels to be updated.
         shape : `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype : ``float``
@@ -324,8 +324,8 @@ def apply_weights(weights: np.array, mask_out: np.array, outdata: np.array,
                   indata: np.array, inxys_int: np.array, ACCEPT: int) -> None:
     """Apply reconstruction weights to input data to get output data.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     weights : np.array
         Array of reconstruction weights for input pixels.
         shape : `(NPIX_SUB**2, ACCEPT*2, ACCEPT*2)`, dtype : ``float``

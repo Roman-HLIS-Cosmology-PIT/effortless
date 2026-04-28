@@ -3,7 +3,7 @@
 Classes
 -------
 PSFModel : Base class for PSF models.
-SubSlice : Sub-slice of the output slice.
+SubSlice : Subslice of the output slice.
 
 """
 
@@ -154,8 +154,8 @@ class PSFModel:
     def __init__(self, psfdata: np.array) -> None:
         """Initialize the (input) PSF model with given PSF data.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         psfdata : np.array
             PSF data array.
             shape : `(NTOT, NTOT)` or as needed, dtype : ``float``
@@ -171,8 +171,8 @@ class PSFModel:
     def __call__(self, x: float = -np.inf, y: float = -np.inf) -> np.array:
         """Return the (input) PSF at given coordinates.
 
-        Arguments
-        ---------
+        Parameters
+        ----------
         x, y : float, default=-np.inf
             Coordinates in the input pixel plane. Ignored in the base class.
 
@@ -190,7 +190,7 @@ class PSFModel:
 
 
 class SubSlice:
-    """Sub-slice of the output slice.
+    """Subslice of the output slice.
 
     Attributes
     ----------
@@ -205,15 +205,15 @@ class SubSlice:
     RENORM : bool, default=False
         Whether to renormalize weights after adjustments.
 
-    Static Method
-    -------------
+    Static Methods
+    --------------
     get_dworld_dpixel : Compute the Jacobian matrix of world coordinates
                         with respect to pixel coordinates at given coordinates.
 
     Methods
     -------
-    __init__ : Initialize the sub-slice with given output slice and coordinates.
-    __call__ : Process the sub-slice with given target output PSF width.
+    __init__ : Initialize the subslice with given output slice and coordinates.
+    __call__ : Process the subslice with given target output PSF width.
 
     """
 
@@ -226,13 +226,13 @@ class SubSlice:
     @staticmethod
     def get_dworld_dpixel(slice, x: float, y: float) -> np.array:
         """Compute the Jacobian matrix of world coordinates
-           with respect to pixel coordinates at given coordinates.
+        with respect to pixel coordinates at given coordinates.
 
         Parameters
         ----------
         slice : "InSlice" or "OutSlice"
             Slice object containing the WCS information.
-        x, y : float
+        x, y : float, float
             Coordinates in the given pixel plane.
 
         Returns
@@ -248,14 +248,14 @@ class SubSlice:
             slice.wcs, x-0.5, y-0.5) / slice.scale
 
     def __init__(self, outslice, X: int, Y: int) -> None:
-        """Initialize the sub-slice with given output slice and coordinates.
+        """Initialize the subslice with given output slice and coordinates.
 
         Parameters
         ----------
         outslice : "OutSlice"
             Output slice object.
         X, Y : int
-            Indices of the sub-slice in the output slice.
+            Indices of the subslice in the output slice.
 
         """
 
@@ -270,7 +270,7 @@ class SubSlice:
         self.ctr = np.array([(X+0.5)*NPIX_SUB-0.5, (Y+0.5)*NPIX_SUB-0.5])
 
     def __call__(self, sigma: float) -> None:
-        """Process the sub-slice with given target output PSF width.
+        """Process the subslice with given target output PSF width.
 
         Parameters
         ----------
@@ -290,8 +290,8 @@ class SubSlice:
                                         self.X*NPIX_SUB:(self.X+1)*NPIX_SUB].copy()
             if not np.any(mask_out): continue
 
-            # Get PSFs and weight field at the center of the sub-slice.
-            ctr_in = inslice.outpix2world2inpix(self.outslice.wcs, self.ctr[None])[0]
+            # Get PSFs and weight field at the center of the subslice.
+            ctr_in = inslice.outpix2world2inpix(self.ctr[None])[0]
             psf_in = inslice.get_psf(*ctr_in)
             psf_out = PSFModel.psf_gaussian(sigma, dout_din=np.linalg.inv(
                 SubSlice.get_dworld_dpixel(self.outslice, *self.ctr)) @\
@@ -302,7 +302,7 @@ class SubSlice:
             weight[1:, 1:] = np.flip(weight[1:, 1:])
 
             # Convert output to input pixel coordinates.
-            inxys = inslice.outpix2world2inpix(self.outslice.wcs, self.outxys)
+            inxys = inslice.outpix2world2inpix(self.outxys)
             inxys_frac, inxys_int = np.modf(inxys); inxys_int = inxys_int.astype(int) + 1
             x_min, y_min = np.min(inxys_int[mask_out.ravel()], axis=0) - self.ACCEPT
             x_max, y_max = np.max(inxys_int[mask_out.ravel()], axis=0) + self.ACCEPT

@@ -384,7 +384,7 @@ class OutSlice:
         self.inslices = [inslice for inslice in self.inslices if inslice.is_relevant]
         self.ninslice = len(self.inslices)
         self.data = np.zeros((InSlice.NLAYER,) + ((self.ninslice,) if self.SAVE_ALL else ()) +
-                             (InSlice.NSIDE,)*2, dtype=np.float32)
+                             (self.NPIX_TOT,)*2, dtype=np.float32)
 
     def __call__(self, filename: str = None, timing: bool = False, stop: int = np.inf) -> None:
         """Process the output image slice.

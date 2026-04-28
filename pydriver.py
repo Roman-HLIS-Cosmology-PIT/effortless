@@ -3,11 +3,11 @@ import warnings; warnings.filterwarnings("ignore")
 
 import numpy as np
 
-from effortless.io_pyimcom import FConfig, PyOutSlice
-from effortless.psfutil import SubSlice
+from effortless.io_pyimcom import EConfig, PyOutSlice
+# from effortless.psfutil import SubSlice
 
 
-cfg = FConfig("../pyimcom_hack_2025Aug4/config_test25-F.json")
+cfg = EConfig("../pyimcom_hack_2025Aug4/config_test25-F.json")
 
 # Use local input files instead those on OSC scratch disk.
 cfg.obsfile = "../S25-RUN/Roman_WAS_obseq_11_1_23.fits"

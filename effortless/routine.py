@@ -191,7 +191,7 @@ def apply_mask_threshold(mask_out: np.array, inmask: np.array,
         shape : `(NPIX_SUB**2,)`, dtype : ``bool``
     inmask : np.array
         Mask of input pixels.
-        shape : `(y_max-y_min, x_max-x_min)`, dtype : ``bool``
+        shape : `(y_max-y_min+1, x_max-x_min+1)`, dtype : ``bool``
     inxys_int : np.array
         Integer part of output pixel coordinates in the input pixel plane.
         shape : `(NPIX_SUB**2, 2)`, dtype : ``int``
@@ -272,7 +272,7 @@ def adjust_weights(weights: np.array, mask_out: np.array, inmask: np.array,
         shape : `(NPIX_SUB**2,)`, dtype : ``bool``
     inmask : np.array
         Mask of input pixels.
-        shape : `(y_max-y_min, x_max-x_min)`, dtype : ``bool``
+        shape : `(y_max-y_min+1, x_max-x_min+1)`, dtype : ``bool``
     inxys_int : np.array
         Integer part of output pixel coordinates in the input pixel plane.
         shape : `(NPIX_SUB**2, 2)`, dtype : ``int``
@@ -337,7 +337,7 @@ def apply_weights(weights: np.array, mask_out: np.array, outdata: np.array,
         shape : `(NLAYER, NPIX_SUB, NPIX_SUB)`, dtype : ``float``
     indata : np.array
         Array of input data.
-        shape : `(NLAYER, y_max-y_min, x_max-x_min)`, dtype : ``float``
+        shape : `(NLAYER, y_max-y_min+1, x_max-x_min+1)`, dtype : ``float``
     inxys_int : np.array
         Integer part of output pixel coordinates in the input pixel plane.
         shape : `(NPIX_SUB**2, 2)`, dtype : ``int``

@@ -26,7 +26,7 @@ class EConfig(Config):
 
     Attributes
     ----------
-    INPSF_NPIX : dict, default={"L2_2506": 128, "anlsim": 32}
+    INPSF_NPIX : dict, default: {"L2_2506": 128, "anlsim": 32}
         Mapping from input PSF format to input PSF size in native pixels.
 
     Methods
@@ -42,7 +42,7 @@ class EConfig(Config):
 
         Parameters
         ----------
-        bl_circ : int, default=57
+        bl_circ : int, default: 57
             Circular bandlimit in Fourier space.
 
         Returns
@@ -89,7 +89,7 @@ class PyPSFModel(PSFModel):
 
         Parameters
         ----------
-        x, y : float, default=-np.inf
+        x, y : float, default: -np.inf
             Coordinates in the input pixel plane.
 
         Returns
@@ -126,14 +126,15 @@ class PyInSlice(InSlice):
             Block object from PyIMCOM.
         idsca : tuple[int, int]
             Observation ID and SCA number.
-        loaddata : bool, default=True
+        loaddata : bool, default: True
             Whether to load the input data.
-        paddata : bool, default=False
+        paddata : bool, default: False
             Whether to pad the input data.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        inimage : InImage
+            InImage object from PyIMCOM.
 
         """
 
@@ -148,9 +149,18 @@ class PyInSlice(InSlice):
     def load_data_and_mask(self) -> None:
         """Load the input data and mask.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        wcs : wcs.WCS
+            WCS object for the input slice.
+        scale : float
+            Pixel scale in degrees.
+        data : np.array
+            Input data array.
+            shape : `(NLAYER, NSIDE, NSIDE)`, dtype : ``float``
+        mask : np.array
+            Input mask array.
+            shape : `(NSIDE, NSIDE)`, dtype : ``bool``
 
         """
 
@@ -187,19 +197,20 @@ class PyOutSlice(OutSlice):
 
         Parameters
         ----------
-        cfg : EConfig, default=None
+        cfg : EConfig, default: None
             Configuration object for Effortless.
             If None, a default EConfig will be created.
-        this_sub : int, default=0
+        this_sub : int, default: 0
             Block index within the Mosaic.
-        timing : bool, default=False
+        timing : bool, default: False
             Whether to print timing information.
-        run_coadd : bool, default=True
+        run_coadd : bool, default: True
             Whether to run coaddition after initialization.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        blk : Block
+            Block object from PyIMCOM.
 
         """
 
@@ -207,16 +218,7 @@ class PyOutSlice(OutSlice):
         self.this_sub = this_sub
         self.blk = Block(self.cfg, this_sub, run_coadd=False)
         self.blk.parse_config()
-        # self.process_input_images()
-        # Hardcode list of input images to save time on tests.
-        self.blk.obslist = [(np.int64(1507), 7), (np.int64(1508), 7), (np.int64(1509), 7),
-                            (np.int64(14748), 10), (np.int64(14749), 10), (np.int64(14753), 12)]
-
-        print("Reading input data ... ")
-        self.blk.pmask = Mask.load_permanent_mask(self.blk)
-        # assert cfg.permanent_mask is None and cfg.cr_mask_rate == 0.0
-        # print("No permanent mask")
-        print()
+        self.process_input_images()
 
         inslices = [PyInSlice(self.blk, idsca) for idsca in self.blk.obslist]
         super().__init__(self.blk.outwcs, inslices, timing)
@@ -227,13 +229,20 @@ class PyOutSlice(OutSlice):
         if run_coadd: self(self.filename, timing, min(np.inf, (self.cfg.stoptile+3)//4))
 
     def process_input_images(self) -> None:
-        """Process input images from PyIMCOM.
+        """Process input images (from PyIMCOM).
 
         Returns
         -------
         None
 
         """
+
+        bypass = True  # Use hardcoded list of input images to save time in tests.
+        if bypass:
+            self.blk.obslist = [(np.int64(1507), 7), (np.int64(1508), 7), (np.int64(1509), 7),
+                                (np.int64(14748), 10), (np.int64(14749), 10), (np.int64(14753), 12)]
+            self.blk.pmask = Mask.load_permanent_mask(self.blk)
+            return
 
         # Now figure out which observations we need.
         search_radius = Stn.sca_sidelength / np.sqrt(2.0) / Stn.degree \
@@ -257,6 +266,10 @@ class PyOutSlice(OutSlice):
                 self.blk.obsdata["pa"][idsca[0]], cpos, " " if inimage.exists_ else "x", inimage.infile))
         print()
         assert any_exists, "No candidate observations found to stack. Exiting now."
+
+        print("Reading input data ... ")
+        self.blk.pmask = Mask.load_permanent_mask(self.blk)
+        print()
 
         # Remove nonexistent input images.
         self.blk.obslist = [self.blk.obslist[i] for i, inimage

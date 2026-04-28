@@ -22,9 +22,9 @@ class InSlice:
 
     Attributes
     ----------
-    NSIDE : int, default=4088
+    NSIDE : int, default: 4088
         Original input slice size in pixels.
-    NLAYER : int, default=1
+    NLAYER : int, default: 1
         Number of input layers.
 
     Methods
@@ -54,16 +54,18 @@ class InSlice:
         ----------
         filename : str
             Input image file name.
-        psfmodel : PSFModel, default=None
+        psfmodel : PSFModel, default: None
             PSF model for this input image.
-        loaddata : bool, default=True
+        loaddata : bool, default: True
             Whether to load the input data and mask.
-        paddata : bool, default=False
+        paddata : bool, default: False
             Whether to pad the input data and mask.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        inxy_min : np.array
+            Minimum input pixel coordinates of the slice.
+            shape : `(2,)`, dtype : ``int``
 
         """
 
@@ -82,9 +84,18 @@ class InSlice:
     def load_data_and_mask(self) -> None:
         """Load the input data and mask.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        wcs : wcs.WCS
+            WCS object for the input slice.
+        scale : float
+            Pixel scale in degrees.
+        data : np.array
+            Input data array.
+            shape : `(NLAYER, NSIDE, NSIDE)`, dtype : ``float``
+        mask : np.array
+            Input mask array.
+            shape : `(NSIDE, NSIDE)`, dtype : ``bool``
 
         """
 
@@ -157,12 +168,16 @@ class InSlice:
 
         Parameters
         ----------
-        shrink : bool, default=True
+        shrink : bool, default: True
             Whether to shrink the input slice to the relevant region.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        mask_out : np.array
+            Mask for output pixels.
+            shape : `(NPIX_TOT, NPIX_TOT)`, dtype : ``bool``
+        is_relevant : bool
+            Whether the input slice overlaps with the output slice at all.
 
         """
 
@@ -246,7 +261,7 @@ class InSlice:
 
         Parameters
         ----------
-        x, y : float, float, default=-np.inf, -np.inf
+        x, y : float, float, default: -np.inf, -np.inf
             Input pixel coordinates.
 
         Returns
@@ -286,17 +301,17 @@ class OutSlice:
 
     Attributes
     ----------
-    NSUB : int, default=73
+    NSUB : int, default: 73
         Output slice size in subslices, similar to n1//2 in PyIMCOM.
-    NPIX_SUB : int, default=56
+    NPIX_SUB : int, default: 56
         Subslice size in pixels, similar to n2*2 in PyIMCOM.
-    NPIX_TOT : int, default=NSUB*NPIX_SUB
+    NPIX_TOT : int, default: NSUB*NPIX_SUB
         Output slice size in pixels.
-    CDELT : float, default=1.5277777777777777e-05
+    CDELT : float, default: 1.5277777777777777e-05
         Output pixel scale in degrees.
-    SIGMA : float, default=1.401
+    SIGMA : float, default: 1.401
         Target output PSF width in native pixels.
-    SAVE_ALL : bool, default=True
+    SAVE_ALL : bool, default: True
         Whether to save individual regridded images.
 
     Class Methods
@@ -329,10 +344,10 @@ class OutSlice:
         outcrval : np.array
             World coordinates at the reference pixel.
             shape : `(2,)`, dtype : ``float``
-        outcrpix : list[float, float], default=None
+        outcrpix : list[float, float], default: None
             Pixel coordinates of the reference pixel.
             If None, set to the center of the output slice.
-        outcdelt : list[float, float], default=None
+        outcdelt : list[float, float], default: None
             Pixel scale in degrees. If None, set to [CDELT, -CDELT].
 
         Returns
@@ -358,12 +373,19 @@ class OutSlice:
             WCS object for the output slice.
         inslices : list[InSlice]
             List of candidate input image slices for the output slice.
-        timing : bool, default=False
+        timing : bool, default: False
             Whether to print timing information during initialization.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        scale : float
+            Pixel scale in degrees.
+        ninslice : int
+            Number of relevant input slices.
+        data : np.array
+            Output data array.
+            shape : `(NLAYER, NPIX_TOT, NPIX_TOT)`, dtype : ``float`` or
+                    `(NLAYER, ninslice, NPIX_TOT, NPIX_TOT)`, dtype : ``float``
 
         """
 
@@ -391,16 +413,18 @@ class OutSlice:
 
         Parameters
         ----------
-        filename : str, default=None
+        filename : str, default: None
             Output file name. If None, do not write to a file.
-        timing : bool, default=False
+        timing : bool, default: False
             Whether to print timing information during processing.
-        stop : int, default=np.inf
+        stop : int, default: np.inf
             Maximum number of subslices to process. Useful for testing.
 
-        Returns
-        -------
-        None
+        Attributes
+        ----------
+        mask : np.array
+            Combination of masks from input slices.
+            shape : `(ninslice, NPIX_TOT, NPIX_TOT)`, dtype : ``bool``
 
         """
 
@@ -428,7 +452,7 @@ class OutSlice:
         ----------
         filename : str
             Output file name.
-        overwrite : bool, default=True
+        overwrite : bool, default: True
             Whether to overwrite the file if it already exists.
 
         Returns

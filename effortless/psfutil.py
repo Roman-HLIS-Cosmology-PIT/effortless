@@ -20,20 +20,20 @@ class PSFModel:
 
     Attributes
     ----------
-    NPIX : int, default=48
+    NPIX : int, default: 48
         PSF array size in native pixels.
-    SAMP : int, default=4
+    SAMP : int, default: 4
         Oversampling rate of PSF arrays.
-    NTOT : int, default=192
+    NTOT : int, default: 192
         PSF array size in oversampled pixels.
-    YXCTR : float, default=96.0
+    YXCTR : float, default: 96.0
         PSF array center in oversampled pixels.
-    BL_CIRC : int, default=33
+    BL_CIRC : int, default: 33
         Circular bandlimit in Fourier space.
 
-    SIGMA_TO_FWHM : float, default=2.3548200460338346
+    SIGMA_TO_FWHM : float, default: 2.3548200460338346
         Conversion factor from sigma to FWHM for Gaussian PSFs.
-    SIGMA : dict, default={"Y106": 0.850, "J129": 0.894, "H158": 0.939,
+    SIGMA : dict, default: {"Y106": 0.850, "J129": 0.894, "H158": 0.939,
                            "F184": 0.983, "K213": 1.028}
         Dictionary of default sigma values for different filters.
 
@@ -74,7 +74,7 @@ class PSFModel:
         ----------
         sigma : float
             Sigma of the Gaussian PSF in native pixels.
-        dout_din : np.array, default=np.diag(np.ones(2))
+        dout_din : np.array, default: np.diag(np.ones(2))
             Distortion matrix for converting input to output pixel coordinates.
             shape : `(2, 2)`, dtype : ``float``
 
@@ -173,7 +173,7 @@ class PSFModel:
 
         Parameters
         ----------
-        x, y : float, default=-np.inf
+        x, y : float, default: -np.inf
             Coordinates in the input pixel plane. Ignored in the base class.
 
         Returns
@@ -194,15 +194,15 @@ class SubSlice:
 
     Attributes
     ----------
-    ACCEPT : int, default=8
+    ACCEPT : int, default: 8
         Acceptance radius in native pixels for selecting input pixels.
-    REJECT : int, default=8
+    REJECT : int, default: 8
         Rejection radius in output pixels for masking output pixels.
-    MASK_THR : int, default=32
+    MASK_THR : int, default: 32
         Threshold for number of masked input pixels to mask an output pixel.
-    NDIFF : int, default=5
+    NDIFF : int, default: 5
         Number of iterations for weight diffusion.
-    RENORM : bool, default=False
+    RENORM : bool, default: False
         Whether to renormalize weights after adjustments.
 
     Static Methods
@@ -256,6 +256,15 @@ class SubSlice:
             Output slice object.
         X, Y : int
             Indices of the subslice in the output slice.
+
+        Attributes
+        ----------
+        outxys : np.array
+            Output pixel coordinates in the output pixel plane.
+            shape : `(NPIX_SUB**2, 2)`, dtype : ``float``
+        ctr : np.array
+            Center of the subslice in the output pixel plane.
+            shape : `(2,)`, dtype : ``float``
 
         """
 

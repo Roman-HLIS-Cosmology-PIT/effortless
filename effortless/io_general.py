@@ -31,6 +31,7 @@ class InSlice:
     -------
     __init__ : Initialize the input image slice.
     load_data_and_mask : Load the input data and mask.
+    load_wcs : Load the WCS for the input slice.
     pad_data_and_mask : Pad the input data and mask.
 
     outpix2world2inpix : Convert output to input pixel coordinates.
@@ -47,7 +48,7 @@ class InSlice:
     NLAYER = 1  # Number of input layers.
 
     def __init__(self, filename: str, psfmodel: PSFModel = None,
-                 loaddata: bool = True, paddata: bool = False) -> None:
+                 loaddata: bool = False, paddata: bool = False) -> None:
         """Initialize the input image slice.
 
         Parameters
@@ -56,7 +57,7 @@ class InSlice:
             Input image file name.
         psfmodel : PSFModel, default: None
             PSF model for this input image.
-        loaddata : bool, default: True
+        loaddata : bool, default: False
             Whether to load the input data and mask.
         paddata : bool, default: False
             Whether to pad the input data and mask.
@@ -78,11 +79,11 @@ class InSlice:
             self.load_data_and_mask()
             if paddata: self.pad_data_and_mask()
         else:
-            self.wcs = self.scale = None
+            self.load_wcs()
             self.data = self.mask = None
 
-    def load_data_and_mask(self) -> None:
-        """Load the input data and mask.
+    def load_wcs(self) -> None:
+        """Load the WCS for the input slice.
 
         Attributes
         ----------
@@ -90,6 +91,18 @@ class InSlice:
             WCS object for the input slice.
         scale : float
             Pixel scale in degrees.
+
+        """
+
+        with fits.open(self.filename) as f:
+            self.wcs = wcs.WCS(f["WFI01"].header)
+        self.scale = np.abs(self.wcs.wcs.cd[0, 0])  # Pixel scale in degrees.
+
+    def load_data_and_mask(self) -> None:
+        """Load the input data and mask.
+
+        Attributes
+        ----------
         data : np.array
             Input data array.
             shape : `(NLAYER, NSIDE, NSIDE)`, dtype : ``float``
@@ -221,6 +234,7 @@ class InSlice:
 
         self.is_relevant = np.any(self.mask_out)
         if not self.is_relevant: return
+        self.load_data_and_mask()
 
         if shrink:
             inxy_min -= ACCEPT-1; inxy_max += ACCEPT-1
@@ -236,6 +250,8 @@ class InSlice:
         None
 
         """
+
+        if not self.is_relevant: return
 
         REJECT = SubSlice.REJECT  # Shortcuts.
         NPIX_TOT = OutSlice.NPIX_TOT
@@ -461,11 +477,12 @@ class OutSlice:
 
         """
 
-        datahdu = fits.PrimaryHDU(self.data, header=self.wcs.to_header())
+        my_header = self.wcs.to_header()
+        datahdu = fits.PrimaryHDU(self.data, header=my_header)
         inputhdu = fits.TableHDU.from_columns([fits.Column(name="filename", \
             array=[inslice.filename for inslice in self.inslices], format="A512", ascii=True)])
         inputhdu.name = "INPUT"
-        maskhdu = fits.ImageHDU(self.mask.astype(np.uint8), name="MASK")
+        maskhdu = fits.ImageHDU(self.mask.astype(np.uint8), header=my_header, name="MASK")
 
         hdulist = [datahdu, inputhdu, maskhdu]
         self.customize_hdulist(hdulist)

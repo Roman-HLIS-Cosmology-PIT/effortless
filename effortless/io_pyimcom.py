@@ -287,3 +287,33 @@ class PyOutSlice(OutSlice):
                             in enumerate(self.blk.inimages) if inimage.exists_]
         self.blk.inimages = [inimage for inimage in self.blk.inimages if inimage.exists_]
         self.blk.n_inimage = len(self.blk.inimages)
+
+    def customize_hdulist(self, hdulist: list[fits.hdu]) -> None:
+        """Add config and inlist to the HDU list.
+
+        Parameters
+        ----------
+        hdulist : list[fits.hdu]
+            List of HDU objects to be written to the FITS file.
+
+        Returns
+        -------
+        None
+
+        """
+
+        config_hdu = fits.TableHDU.from_columns(
+            [fits.Column(name="text", array=self.cfg.to_file(None).splitlines(), format="A512", ascii=True)])
+        config_hdu.header["EXTNAME"] = "CONFIG"
+
+        inlist_hdu = fits.BinTableHDU.from_columns([
+            fits.Column(name="obsid", array=np.array([obs[0] for obs in self.obslist]), format="J"),
+            fits.Column(name="sca",   array=np.array([obs[1] for obs in self.obslist]), format="I"),
+            fits.Column(name="ra",    array=np.array([self.obsdata["ra" ][obs[0]] for obs in self.obslist]), format="D", unit="degree"),
+            fits.Column(name="dec",   array=np.array([self.obsdata["dec"][obs[0]] for obs in self.obslist]), format="D", unit="degree"),
+            fits.Column(name="pa",    array=np.array([self.obsdata["pa" ][obs[0]] for obs in self.obslist]), format="D", unit="degree"),
+            fits.Column(name="valid", array=np.array([inimage.exists_ for inimage in self.inimages]), format="L")
+        ])
+        inlist_hdu.header["EXTNAME"] = "INDATA"
+
+        hdulist[1:2] = [config_hdu, inlist_hdu]

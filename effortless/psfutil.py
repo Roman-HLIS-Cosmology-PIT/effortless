@@ -34,7 +34,7 @@ class PSFModel:
     SIGMA_TO_FWHM : float, default: 2.3548200460338346
         Conversion factor from sigma to FWHM for Gaussian PSFs.
     SIGMA : dict, default: {"Y106": 0.850, "J129": 0.894, "H158": 0.939,
-                           "F184": 0.983, "K213": 1.028}
+                            "F184": 0.983, "K213": 1.028}
         Dictionary of default sigma values for different filters.
 
     Class Methods
@@ -87,8 +87,8 @@ class PSFModel:
         xy = np.flip(np.mgrid[-cls.YXCTR:cls.NTOT-1-cls.YXCTR:cls.NTOT*1j,
                               -cls.YXCTR:cls.NTOT-1-cls.YXCTR:cls.NTOT*1j], axis=0)
         invSigma = dout_din.T @ np.diag(np.ones(2) / (sigma*cls.SAMP)**2) @ dout_din
-        return np.exp(-0.5 * np.einsum("lyx,lr,ryx->yx", xy, invSigma, xy))\
-                / (2.0*np.pi * (sigma*cls.SAMP)**2)  # Normalized in the output pixel plane.
+        return np.exp(-0.5 * np.einsum("lji,lr,rji->ji", xy, invSigma, xy))\
+            / (2.0*np.pi * (sigma*cls.SAMP)**2)  # Normalized in the output pixel plane.
 
     @classmethod
     def pixelate_psf(cls, psf: np.array) -> np.array:

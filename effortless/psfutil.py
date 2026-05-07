@@ -28,13 +28,17 @@ class PSFModel:
         PSF array size in oversampled pixels.
     YXCTR : float, default: 96.0
         PSF array center in oversampled pixels.
-    BL_CIRC : int, default: 33
-        Circular bandlimit in Fourier space.
+    BL_CIRC : float, default: 47.37615433949869
+        Circular bandlimit in Fourier space. This is usually a half-integer,
+        but allowed to be any floating-point number for backward compatibility.
 
-    SIGMA_TO_FWHM : float, default: 2.3548200460338346
+    SIGMA_TO_FWHM : float, default: 2.3548200450309493
         Conversion factor from sigma to FWHM for Gaussian PSFs.
-    SIGMA : dict, default: {"Y106": 0.850, "J129": 0.894, "H158": 0.939,
-                            "F184": 0.983, "K213": 1.028}
+    SIGMA : dict, default: {"Y106": 0.8493218002880191,
+                            "J129": 0.89178789030242,
+                            "H158": 0.934253980316821,
+                            "F184": 0.9767200703312219,
+                            "K213": 1.019186160345623}
         Dictionary of default sigma values for different filters.
 
     Class Methods
@@ -54,7 +58,7 @@ class PSFModel:
     SAMP = 4  # Oversampling rate of PSF arrays.
     NTOT = NPIX * SAMP  # PSF array size in oversampled pixels.
     YXCTR = NTOT / 2  # PSF array center in oversampled pixels.
-    BL_CIRC = 33  # Circular bandlimit in Fourier space.
+    BL_CIRC = (33+0.5) * 2.0**0.5  # Circular bandlimit in Fourier space.
 
     SIGMA_TO_FWHM = 2.0 * np.sqrt(2.0 * np.log(2.0))  # For Gaussian PSFs.
     SIGMA = {
@@ -131,7 +135,7 @@ class PSFModel:
 
         """
 
-        bl = (cls.BL_CIRC+0.5) * 2.0**0.5; bl_int = int(bl)
+        bl_int = int(cls.BL_CIRC)
         psf_inp = cls.pixelate_psf(psf_in)
         psf_inp_tbl = bandlimited_rfft2(psf_inp[None], bl_int)[0]
         psf_out_tbl = bandlimited_rfft2(psf_out[None], bl_int)[0]
@@ -139,7 +143,7 @@ class PSFModel:
         weight_tbl = psf_out_tbl / psf_inp_tbl
         # Apply circular bandlimit.
         for du in range(bl_int+1):
-            dv = int((bl**2 - du**2)**0.5)
+            dv = int((cls.BL_CIRC**2 - du**2)**0.5)
             if dv == bl_int: continue
             weight_tbl[dv+1:bl_int*2-dv, du] = 0
 

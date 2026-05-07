@@ -37,13 +37,14 @@ class EConfig(Config):
 
     INPSF_NPIX = {"L2_2506": 128, "anlsim": 32}
 
-    def configure_effortless(self, bl_circ: int = 57) -> None:
+    def configure_effortless(self, bl_circ: float = (57+0.5) * 2.0**0.5) -> None:
         """Configure Effortless using PyIMCOM settings.
 
         Parameters
         ----------
-        bl_circ : int, default: 57
-            Circular bandlimit in Fourier space.
+        bl_circ : float, default: 81.31727983645297
+            Circular bandlimit in Fourier space. This is usually a half-integer,
+            but allowed to be any floating-point number for backward compatibility.
 
         Returns
         -------

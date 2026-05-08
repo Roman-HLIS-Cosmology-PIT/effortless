@@ -139,16 +139,17 @@ class PSFModel:
         psf_inp = cls.pixelate_psf(psf_in)
         psf_inp_tbl = bandlimited_rfft2(psf_inp[None], bl_int)[0]
         psf_out_tbl = bandlimited_rfft2(psf_out[None], bl_int)[0]
-
+        # Here division in Fourier space changes centering in real space.
         weight_tbl = psf_out_tbl / psf_inp_tbl
+
         # Apply circular bandlimit.
         for du in range(bl_int+1):
             dv = int((cls.BL_CIRC**2 - du**2)**0.5)
             if dv == bl_int: continue
-            weight_tbl[dv+1:bl_int*2-dv, du] = 0
+            weight_tbl[dv+1:bl_int*2+1-dv, du] = 0
 
         return np.fft.ifftshift(bandlimited_irfft2(
-            weight_tbl[None], cls.NTOT, cls.NTOT, wd))[0] * cls.SAMP**2
+            weight_tbl[None], cls.NTOT, cls.NTOT, wd)[0]) * cls.SAMP**2
 
     def __init__(self, psfdata: np.array) -> None:
         """Initialize the (input) PSF model with given PSF data.

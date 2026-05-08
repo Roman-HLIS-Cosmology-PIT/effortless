@@ -30,13 +30,13 @@ def bandlimited_rfft2(arr: np.array, bl: int) -> np.array:
 
     Returns
     -------
-    np.array, shape: `(nf, bl*2, bl+1)`, dtype: ``complex``
-        Array of `nf` sets of forward real FFT results.
+    np.array, shape: `(nf, bl*2+1, bl+1)`, dtype: ``complex``
+        Array of `nf` sets of bandlimited forward real FFT results.
 
     """
 
     rft = np.fft.fft(np.fft.rfft(arr)[:, :, :bl+1], axis=-2)
-    return np.concatenate([rft[:, :bl, :], rft[:, -bl:, :]], axis=-2)
+    return np.concatenate([rft[:, :bl+1, :], rft[:, -bl:, :]], axis=-2)
 
 
 def bandlimited_irfft2(rft: np.array, ny: int, nx: int, wd: int = 0) -> np.array:
@@ -44,8 +44,9 @@ def bandlimited_irfft2(rft: np.array, ny: int, nx: int, wd: int = 0) -> np.array
 
     Parameters
     ----------
-    rft : np.array, shape: `(nf, bl*2, bl+1)`, dtype: ``complex``
-        Array of `nf` sets of forward real FFT results.
+    rft : np.array, shape: `(nf, bl*2+1, bl+1)`, dtype: ``complex``
+        Array of `nf` sets of bandlimited forward real FFT results.
+        The functions to be recovered are centered at (0, 0) in real space.
     ny, nx : int, int
         Original shape of functions to be recovered via inverse FFT.
     wd : int, default: 0
@@ -58,20 +59,18 @@ def bandlimited_irfft2(rft: np.array, ny: int, nx: int, wd: int = 0) -> np.array
 
     """
 
-    nf, bl_times2, bl_plus1 = rft.shape; bl = bl_plus1 - 1
+    nf, bl_t2p1, bl_p1 = rft.shape; bl = bl_p1 - 1
+    ift_y = np.fft.ifft(np.concatenate(
+        [rft[:, :bl_p1, :], np.zeros((nf, ny-bl_t2p1, bl_p1), dtype=complex),
+         rft[:, -bl:, :]], axis=-2), axis=-2)  # shape: `(nf, ny, bl+1)`
+
     if wd == 0:
-        return np.fft.irfft(np.concatenate([np.fft.ifft(np.concatenate(
-            [rft[:, :bl, :], np.zeros((nf, ny-bl_times2, bl_plus1), dtype=complex),
-             rft[:, -bl:, :]], axis=-2), axis=-2),
-             np.zeros((nf, ny, nx//2-bl_plus1))], axis=-1), n=nx)
+        return np.fft.irfft(ift_y, n=nx)  # shape: `(nf, ny, nx)`
     else:
-        ift_y = np.fft.ifft(np.concatenate(
-            [rft[:, :bl, :], np.zeros((nf, ny-bl_times2, bl_plus1), dtype=complex),
-             rft[:, -bl:, :]], axis=-2), axis=-2)
-        ift_x = np.fft.irfft(np.concatenate(
-            [np.concatenate([ift_y[:, :wd, :], ift_y[:, -wd:, :]], axis=-2),
-             np.zeros((nf, wd*2, nx//2-bl_plus1))], axis=-1), n=nx)
-        return np.concatenate([ift_x[:, :, :wd], ift_x[:, :, -wd:]], axis=-1)
+        ift_x = np.fft.irfft(np.concatenate([ift_y[:, :wd, :], \
+            ift_y[:, -wd:, :]], axis=-2), n=nx)  # shape: `(nf, wd*2, nx)`
+        return np.concatenate([ift_x[:, :, :wd], \
+            ift_x[:, :, -wd:]], axis=-1)  # shape: `(nf, wd*2, wd*2)`
 
 
 @njit

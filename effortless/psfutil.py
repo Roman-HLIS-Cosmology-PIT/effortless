@@ -8,6 +8,7 @@ SubSlice : Subslice of the output slice.
 """
 
 import numpy as np
+from numpy.polynomial import Polynomial
 from astropy.wcs.utils import local_partial_pixel_derivatives
 
 from .routine import bandlimited_rfft2, bandlimited_irfft2
@@ -31,6 +32,9 @@ class PSFModel:
     BL_CIRC : float, default: 47.37615433949869
         Circular bandlimit in Fourier space. This is usually a half-integer,
         but allowed to be any floating-point number for backward compatibility.
+    BL_INNER : int, default: 35
+        Inner bandlimit for fixing annular artifacts (in F184).
+        If 0, no correction is applied.
 
     SIGMA_TO_FWHM : float, default: 2.3548200450309493
         Conversion factor from sigma to FWHM for Gaussian PSFs.
@@ -59,6 +63,7 @@ class PSFModel:
     NTOT = NPIX * SAMP  # PSF array size in oversampled pixels.
     YXCTR = NTOT / 2  # PSF array center in oversampled pixels.
     BL_CIRC = (33+0.5) * 2.0**0.5  # Circular bandlimit in Fourier space.
+    BL_INNER = 35  # Inner bandlimit for fixing annular artifacts (in F184).
 
     SIGMA_TO_FWHM = 2.0 * np.sqrt(2.0 * np.log(2.0))  # For Gaussian PSFs.
     SIGMA = {
@@ -147,6 +152,23 @@ class PSFModel:
             dv = int((cls.BL_CIRC**2 - du**2)**0.5)
             if dv == bl_int: continue
             weight_tbl[dv+1:bl_int*2+1-dv, du] = 0
+
+        # Fix annular artifacts (in F184).
+        if cls.BL_INNER > 0:
+            indices = np.indices(weight_tbl.shape)
+            indices[0, bl_int+1:] -= bl_int*2+1
+            wavenumber = np.hypot(*indices)
+            amplitude = np.abs(weight_tbl)
+
+            x = np.concatenate([np.arange(cls.BL_INNER-2, cls.BL_INNER+1),
+                                bl_int+1 + np.linspace(0, bl_int-cls.BL_INNER, 3)])
+            y = np.concatenate([[np.median(amplitude[(wavenumber > integer-0.5) &
+                                                     (wavenumber < integer+0.5)])
+                                 for integer in x[:3]], np.zeros(3)])
+            p = Polynomial.fit(x, y, deg=3)
+
+            selection = (wavenumber > cls.BL_INNER+0.5) & (amplitude != 0.0)
+            weight_tbl[selection] *= p(wavenumber[selection]) / amplitude[selection]
 
         return np.fft.ifftshift(bandlimited_irfft2(
             weight_tbl[None], cls.NTOT, cls.NTOT, wd)[0]) * cls.SAMP**2

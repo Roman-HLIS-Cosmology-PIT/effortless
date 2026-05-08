@@ -11,9 +11,8 @@ import numpy as np
 from numpy.polynomial import Polynomial
 from astropy.wcs.utils import local_partial_pixel_derivatives
 
-from .routine import bandlimited_rfft2, bandlimited_irfft2
-from .routine import apply_mask_threshold, compute_weights
-from .routine import adjust_weights, apply_weights
+from .routine import bandlimited_rfft2, bandlimited_irfft2, \
+    apply_mask_threshold, compute_weights, adjust_weights, apply_weights
 
 
 class PSFModel:
@@ -29,12 +28,6 @@ class PSFModel:
         PSF array size in oversampled pixels.
     YXCTR : float, default: 96.0
         PSF array center in oversampled pixels.
-    BL_CIRC : float, default: 47.37615433949869
-        Circular bandlimit in Fourier space. This is usually a half-integer,
-        but allowed to be any floating-point number for backward compatibility.
-    BL_INNER : int, default: 35
-        Inner bandlimit for fixing annular artifacts (in F184).
-        If 0, no correction is applied.
 
     SIGMA_TO_FWHM : float, default: 2.3548200450309493
         Conversion factor from sigma to FWHM for Gaussian PSFs.
@@ -44,6 +37,12 @@ class PSFModel:
                             "F184": 0.9767200703312219,
                             "K213": 1.019186160345623}
         Dictionary of default sigma values for different filters.
+    BL_CIRC : float, default: 47.37615433949869
+        Circular bandlimit in Fourier space. This is usually a half-integer,
+        but allowed to be any floating-point number for backward compatibility.
+    BL_INNER : int, default: 35
+        Inner bandlimit for fixing annular artifacts (in F184).
+        If 0, no correction is applied.
 
     Class Methods
     -------------
@@ -62,8 +61,6 @@ class PSFModel:
     SAMP = 4  # Oversampling rate of PSF arrays.
     NTOT = NPIX * SAMP  # PSF array size in oversampled pixels.
     YXCTR = NTOT / 2  # PSF array center in oversampled pixels.
-    BL_CIRC = (33+0.5) * 2.0**0.5  # Circular bandlimit in Fourier space.
-    BL_INNER = 35  # Inner bandlimit for fixing annular artifacts (in F184).
 
     SIGMA_TO_FWHM = 2.0 * np.sqrt(2.0 * np.log(2.0))  # For Gaussian PSFs.
     SIGMA = {
@@ -73,6 +70,8 @@ class PSFModel:
         "F184": 2.3 / SIGMA_TO_FWHM,
         "K213": 2.4 / SIGMA_TO_FWHM,
     }  # From pyimcom/configs/production_configs_spring2024.
+    BL_CIRC = (33+0.5) * 2.0**0.5  # Circular bandlimit in Fourier space.
+    BL_INNER = 35  # Inner bandlimit for fixing annular artifacts (in F184).
 
     @classmethod
     def psf_gaussian(cls, sigma: float, dout_din: np.array = np.diag(np.ones(2))) -> np.array:
@@ -151,7 +150,7 @@ class PSFModel:
         for du in range(bl_int+1):
             dv = int((cls.BL_CIRC**2 - du**2)**0.5)
             if dv == bl_int: continue
-            weight_tbl[dv+1:bl_int*2+1-dv, du] = 0
+            weight_tbl[dv+1:bl_int*2+1-dv, du] = 0j
 
         # Fix annular artifacts (in F184).
         if cls.BL_INNER > 0:
@@ -310,6 +309,7 @@ class SubSlice:
         """
 
         NPIX_SUB = self.outslice.NPIX_SUB  # Shortcut.
+        wd = self.ACCEPT * PSFModel.SAMP + 6  # Half window size.
 
         for i_sl, inslice in enumerate(self.outslice.inslices):
             mask_out = inslice.mask_out[self.Y*NPIX_SUB:(self.Y+1)*NPIX_SUB,
@@ -322,7 +322,6 @@ class SubSlice:
             psf_out = PSFModel.psf_gaussian(sigma, dout_din=np.linalg.inv(
                 SubSlice.get_dworld_dpixel(self.outslice, *self.ctr)) @\
                 SubSlice.get_dworld_dpixel(inslice, *ctr_in))
-            wd = self.ACCEPT * PSFModel.SAMP + 6
             # In principle we should flip the input PSF, but
             # in practice it is easier to flip the weight field.
             weight = PSFModel.get_weight_field(psf_in, psf_out, wd)[:0:-1, :0:-1].copy()

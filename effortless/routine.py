@@ -60,9 +60,9 @@ def bandlimited_irfft2(rft: np.array, ny: int, nx: int, wd: int = 0) -> np.array
     """
 
     nf, bl_t2p1, bl_p1 = rft.shape; bl = bl_p1 - 1
-    ift_y = np.fft.ifft(np.concatenate(
-        [rft[:, :bl_p1, :], np.zeros((nf, ny-bl_t2p1, bl_p1), dtype=complex),
-         rft[:, -bl:, :]], axis=-2), axis=-2)  # shape: `(nf, ny, bl+1)`
+    ift_y = np.fft.ifft(np.concatenate([rft[:, :bl_p1, :], \
+        np.zeros((nf, ny-bl_t2p1, bl_p1), dtype=complex),
+        rft[:, -bl:, :]], axis=-2), axis=-2)  # shape: `(nf, ny, bl+1)`
 
     if wd == 0:
         return np.fft.irfft(ift_y, n=nx)  # shape: `(nf, ny, nx)`
@@ -130,12 +130,12 @@ def reggridD5512C(infunc: np.array, x0: float, y0: float, SAMP: int,
 
     Parameters
     ----------
-    infunc : np.array, shape: `(ny, nx)`, dtype: ``float``
-        Input function on some grid.
+    infunc : np.array, shape: as needed, dtype: ``float``
+        Input function for iD5512C interpolation.
     x0, y0 : float, float
         Central output point in the input grid.
     SAMP : int
-        Oversampling rate of PSF arrays.
+        Oversampling rate of the input function.
     ACCEPT : int
         Acceptance radius in native pixels.
     out_arr : np.array, shape: `(ACCEPT*2, ACCEPT*2)`, dtype: ``float``
@@ -235,7 +235,7 @@ def compute_weights(weights: np.array, mask_out: np.array, weight: np.array,
     YXCTR : float
         Center of the weight field in each direction.
     SAMP : int
-        Oversampling rate of PSF arrays.
+        Oversampling rate of the weight field.
     ACCEPT : int
         Acceptance radius in native pixels.
 
@@ -308,7 +308,7 @@ def adjust_weights(weights: np.array, mask_out: np.array, inmask: np.array,
             if loss_frac == 0.0: continue
         weights[i] *= inmask_i
         if RENORM:
-            weights[i] *= 1 / (1 - loss_frac)
+            weights[i] *= 1.0 / (1.0 - loss_frac)
 
 
 @njit

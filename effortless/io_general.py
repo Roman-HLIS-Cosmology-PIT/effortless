@@ -30,8 +30,8 @@ class InSlice:
     Methods
     -------
     __init__ : Initialize the input image slice.
-    load_data_and_mask : Load the input data and mask.
     load_wcs : Load the WCS for the input slice.
+    load_data_and_mask : Load the input data and mask.
     pad_data_and_mask : Pad the input data and mask.
 
     outpix2world2inpix : Convert output to input pixel coordinates.
@@ -57,6 +57,7 @@ class InSlice:
             Input image file name.
         psfmodel : PSFModel, default: None
             PSF model for this input image.
+            Must be provided before running reconstruction.
         loaddata : bool, default: False
             Whether to load the input data and mask.
         paddata : bool, default: False
@@ -315,7 +316,7 @@ class OutSlice:
         Output slice size in pixels.
     CDELT : float, default: 1.5277777777777777e-05
         Output pixel scale in degrees.
-    SIGMA : float, default: 1.401
+    SIGMA : float, default: 1.4013809704752316
         Target output PSF width in native pixels.
     SAVE_ALL : bool, default: True
         Whether to save individual regridded images.

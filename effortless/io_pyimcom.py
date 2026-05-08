@@ -37,7 +37,8 @@ class EConfig(Config):
 
     INPSF_NPIX = {"L2_2506": 128, "anlsim": 32}
 
-    def configure_effortless(self, bl_circ: float = (57+0.5) * 2.0**0.5) -> None:
+    def configure_effortless(self, bl_circ: float = (57+0.5) * 2.0**0.5,
+                             bl_inner: int = 0) -> None:
         """Configure Effortless using PyIMCOM settings.
 
         Parameters
@@ -45,6 +46,9 @@ class EConfig(Config):
         bl_circ : float, default: 81.31727983645297
             Circular bandlimit in Fourier space. This is usually a half-integer,
             but allowed to be any floating-point number for backward compatibility.
+        bl_inner : int, default: 0
+            Inner bandlimit for fixing annular artifacts (in F184).
+            If 0, no correction is applied.
 
         Returns
         -------
@@ -61,6 +65,7 @@ class EConfig(Config):
         PSFModel.NTOT = PSFModel.NPIX * PSFModel.SAMP
         PSFModel.YXCTR = (PSFModel.NTOT-1) / 2
         PSFModel.BL_CIRC = bl_circ
+        PSFModel.BL_INNER = bl_inner
 
         InSlice.NLAYER = self.n_inframe
         OutSlice.NSUB, OutSlice.NPIX_SUB, OutSlice.CDELT =\
@@ -264,7 +269,7 @@ class PyOutSlice(OutSlice):
 
         """
 
-        bypass = True  # Use hardcoded list of input images to save time in tests.
+        bypass = False  # Use hardcoded list of input images to save time in tests.
         if bypass:
             self.blk.obslist = [(np.int64(1507), 7), (np.int64(1508), 7), (np.int64(1509), 7),
                                 (np.int64(14748), 10), (np.int64(14749), 10), (np.int64(14753), 12)]

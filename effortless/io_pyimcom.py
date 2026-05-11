@@ -118,6 +118,7 @@ class PyInSlice(InSlice):
     Methods
     -------
     __init__ : Initialize the input image slice.
+    load_wcs : Load the WCS for the input slice.
     load_data_and_mask : Load the input data and mask.
 
     """
@@ -146,7 +147,7 @@ class PyInSlice(InSlice):
 
         self.blk, self.idsca = blk, idsca
         self.inimage = InImage(blk, idsca)
-        cfg = self.inimage.blk.cfg  # Shortcut.
+        cfg = self.blk.cfg  # Shortcut.
         with fits.open(cfg.inpsf_path + "/" + InImage.psf_filename(
             cfg.inpsf_format, idsca[0])) as f:
             psfmodel = PyPSFModel(f[idsca[1]].data)
@@ -163,6 +164,9 @@ class PyInSlice(InSlice):
             Pixel scale in degrees.
 
         """
+
+        if all(hasattr(self, attr) for attr in
+               ["wcs", "scale"]): return
 
         self.wcs = self.inimage.inwcs.obj
         self.scale = Stn.pixscale_native / Stn.degree
@@ -206,8 +210,10 @@ class PyInSlice(InSlice):
 
         # Extract mask from file.
         self.mask &= Mask.load_mask_from_maskfile(self.blk.cfg, self.blk.obsdata, self.idsca)
-        # Temporarily exclude `L2_2506` input masks.
-        # self.data[0] *= Mask.load_mask_from_maskfile(self.blk.cfg, self.blk.obsdata, self.idsca)
+        if InSlice.NOMASK:
+            if self.blk.cfg.inpsf_format == "L2_2506":
+                self.data[0] *= self.mask
+            self.mask = np.ones_like(self.mask, dtype=bool)
         del self.blk
 
 
@@ -239,8 +245,10 @@ class PyOutSlice(OutSlice):
 
         Attributes
         ----------
-        blk : Block
-            Block object from PyIMCOM.
+        obsdata : fits.fitsrec.FITS_rec
+            Observation table (date, exptime, ra, dec, pa, and filter).
+        obslist : list[tuple[int, int]]
+            List of (observation ID, SCA number) tuples for the input images.
 
         """
 
@@ -254,7 +262,7 @@ class PyOutSlice(OutSlice):
         if self.cfg.pad_sides == "none": 
             self.blk.outwcs.wcs.crpix -= self.cfg.postage_pad * self.cfg.n2
         super().__init__(self.blk.outwcs, inslices, timing)
-        del self.blk
+        self.obsdata, self.obslist = self.blk.obsdata, self.blk.obslist; del self.blk
 
         ibx, iby = divmod(self.this_sub, self.cfg.nblock)
         self.filename = f"{self.cfg.outstem}_{ibx:02d}_{iby:02d}.fits"
@@ -333,7 +341,7 @@ class PyOutSlice(OutSlice):
             fits.Column(name="ra",    array=np.array([self.obsdata["ra" ][obs[0]] for obs in self.obslist]), format="D", unit="degree"),
             fits.Column(name="dec",   array=np.array([self.obsdata["dec"][obs[0]] for obs in self.obslist]), format="D", unit="degree"),
             fits.Column(name="pa",    array=np.array([self.obsdata["pa" ][obs[0]] for obs in self.obslist]), format="D", unit="degree"),
-            fits.Column(name="valid", array=np.array([inimage.exists_ for inimage in self.inimages]), format="L")
+            fits.Column(name="valid", array=np.array([inslice.is_relevant for inslice in self.inslices]), format="L")
         ])
         inlist_hdu.header["EXTNAME"] = "INDATA"
 

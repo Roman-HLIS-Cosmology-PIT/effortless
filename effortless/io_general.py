@@ -26,6 +26,8 @@ class InSlice:
         Original input slice size in pixels.
     NLAYER : int, default: 1
         Number of input layers.
+    NOMASK : bool, default: False
+        Whether to ignore the input mask.
 
     Methods
     -------
@@ -46,6 +48,7 @@ class InSlice:
 
     NSIDE = 4088  # Original input slice size in pixels.
     NLAYER = 1  # Number of input layers.
+    NOMASK = False  # Whether to ignore the input mask.
 
     def __init__(self, filename: str, psfmodel: PSFModel = None,
                  loaddata: bool = False, paddata: bool = False) -> None:
@@ -76,11 +79,9 @@ class InSlice:
         # Minimum input pixel coordinates.
         self.inxy_min = np.zeros(2, dtype=int)
         if loaddata:
-            self.load_data_and_mask()
-            if paddata: self.pad_data_and_mask()
+            self.load_data_and_mask(paddata)
         else:
             self.load_wcs()
-            self.data = self.mask = None
 
     def load_wcs(self) -> None:
         """Load the WCS for the input slice.
@@ -94,12 +95,20 @@ class InSlice:
 
         """
 
+        if all(hasattr(self, attr) for attr in
+               ["wcs", "scale"]): return
+
         with fits.open(self.filename) as f:
             self.wcs = wcs.WCS(f["WFI01"].header)
         self.scale = np.abs(self.wcs.wcs.cd[0, 0])  # Pixel scale in degrees.
 
-    def load_data_and_mask(self) -> None:
+    def load_data_and_mask(self, paddata: bool = False) -> None:
         """Load the input data and mask.
+
+        Parameters
+        ----------
+        paddata : bool, default: False
+            Whether to pad the input data and mask.
 
         Attributes
         ----------
@@ -110,12 +119,18 @@ class InSlice:
 
         """
 
+        if all(hasattr(self, attr) for attr in
+               ["wcs", "scale", "data", "mask"]): return
+
         self.data = np.zeros((InSlice.NLAYER,) + (InSlice.NSIDE,)*2, dtype=np.float32)
         with fits.open(self.filename) as f:
             self.wcs = wcs.WCS(f["WFI01"].header)
             self.data[0] = f["WFI01"].data.astype(np.float32)
         self.scale = np.abs(self.wcs.wcs.cd[0, 0])  # Pixel scale in degrees.
         self.mask = np.ones((InSlice.NSIDE, InSlice.NSIDE), dtype=bool)
+
+        if paddata:
+            self.pad_data_and_mask()
 
     def pad_data_and_mask(self) -> None:
         """Pad the input data and mask.
@@ -184,6 +199,11 @@ class InSlice:
             Mask for output pixels.
         is_relevant : bool
             Whether the input slice overlaps with the output slice at all.
+
+        Notes
+        -----
+        The current version is inconsistent with `pad_data_and_mask`, which is
+        off by default. This issue must be resolved if padding is desirable.
 
         """
 

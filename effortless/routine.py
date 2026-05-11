@@ -5,7 +5,7 @@ Functions
 bandlimited_rfft2 : Bandlimited forward real FFT in 2D.
 bandlimited_irfft2 : Bandlimited inverse real FFT in 2D.
 iD5512C_getw : Interpolation code written by Python (from PyIMCOM).
-reggridD5512C : iD5512C interpolation for output points on a regular grid.
+reggridD5512C : D5512C interpolation for output points on a regular grid.
 
 apply_mask_threshold : Apply threshold for number of masked input pixels.
 compute_weights : Compute reconstruction weights for input pixels.
@@ -126,12 +126,12 @@ def iD5512C_getw(w: np.array, fh: float) -> None:
 @njit
 def reggridD5512C(infunc: np.array, x0: float, y0: float, SAMP: int,
                   ACCEPT: int, out_arr: np.array, circ_cut: bool = False) -> None:
-    """iD5512C interpolation for output points on a regular grid.
+    """D5512C interpolation for output points on a regular grid.
 
     Parameters
     ----------
     infunc : np.array, shape: as needed, dtype: ``float``
-        Input function for iD5512C interpolation.
+        Input function for D5512C interpolation.
     x0, y0 : float, float
         Central output point in the input grid.
     SAMP : int

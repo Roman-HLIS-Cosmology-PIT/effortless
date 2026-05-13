@@ -38,7 +38,7 @@ class EConfig(Config):
     INPSF_NPIX = {"L2_2506": 128, "anlsim": 32}
 
     def configure_effortless(self, bl_circ: float = (57+0.5) * 2.0**0.5,
-                             bl_inner: int = 0) -> None:
+                             bl_inner: int = 0, nomask: bool = False) -> None:
         """Configure Effortless using PyIMCOM settings.
 
         Parameters
@@ -49,6 +49,8 @@ class EConfig(Config):
         bl_inner : int, default: 0
             Inner bandlimit for fixing annular artifacts (in F184).
             If 0, no correction is applied.
+        NOMASK : bool, default: False
+            Whether to ignore the input mask.
 
         Returns
         -------
@@ -68,6 +70,7 @@ class EConfig(Config):
         PSFModel.BL_INNER = bl_inner
 
         InSlice.NLAYER = self.n_inframe
+        InSlice.NOMASK = nomask
         OutSlice.NSUB, OutSlice.NPIX_SUB, OutSlice.CDELT =\
             self.n1P//2, self.n2*2, self.dtheta
         assert self.pad_sides in ["all", "none"], \
@@ -148,8 +151,13 @@ class PyInSlice(InSlice):
         self.blk, self.idsca = blk, idsca
         self.inimage = InImage(blk, idsca)
         cfg = self.blk.cfg  # Shortcut.
-        with fits.open(cfg.inpsf_path + "/" + InImage.psf_filename(
-            cfg.inpsf_format, idsca[0])) as f:
+
+        match cfg.inpsf_format:
+            case "L2_2506": inpsf_file = cfg.inpsf_path +\
+                "/" + InImage.psf_filename(cfg.inpsf_format, idsca[0])
+            case "anlsim": inpsf_file = cfg.inpsf_path +\
+                "/psf_polyfit_{:d}.fits".format(self.idsca[0])
+        with fits.open(inpsf_file) as f:
             psfmodel = PyPSFModel(f[idsca[1]].data)
         super().__init__(self.inimage.infile, psfmodel, loaddata, paddata)
 
@@ -168,7 +176,9 @@ class PyInSlice(InSlice):
         if all(hasattr(self, attr) for attr in
                ["wcs", "scale"]): return
 
-        self.wcs = self.inimage.inwcs.obj
+        match self.blk.cfg.informat:
+            case "L2_2506": self.wcs = self.inimage.inwcs.obj
+            case "anlsim": self.wcs = self.inimage.inwcs
         self.scale = Stn.pixscale_native / Stn.degree
 
     def load_data_and_mask(self) -> None:
@@ -191,7 +201,10 @@ class PyInSlice(InSlice):
                ["wcs", "scale", "data", "mask"]): return
 
         print("input image", self.inimage.idsca)
-        self.wcs = self.inimage.inwcs.obj
+        informat = self.blk.cfg.informat  # Shortcut.
+        match informat:
+            case "L2_2506": self.wcs = self.inimage.inwcs.obj
+            case "anlsim": self.wcs = self.inimage.inwcs
         self.scale = Stn.pixscale_native / Stn.degree
 
         # Load masks here.
@@ -209,9 +222,10 @@ class PyInSlice(InSlice):
         del cr_mask, self.inimage
 
         # Extract mask from file.
-        self.mask &= Mask.load_mask_from_maskfile(self.blk.cfg, self.blk.obsdata, self.idsca)
+        if informat == "L2_2506":
+            self.mask &= Mask.load_mask_from_maskfile(self.blk.cfg, self.blk.obsdata, self.idsca)
         if InSlice.NOMASK:
-            if self.blk.cfg.inpsf_format == "L2_2506":
+            if informat == "L2_2506":
                 self.data[0] *= self.mask
             self.mask = np.ones_like(self.mask, dtype=bool)
         del self.blk
@@ -276,13 +290,6 @@ class PyOutSlice(OutSlice):
         None
 
         """
-
-        bypass = False  # Use hardcoded list of input images to save time in tests.
-        if bypass:
-            self.blk.obslist = [(np.int64(1507), 7), (np.int64(1508), 7), (np.int64(1509), 7),
-                                (np.int64(14748), 10), (np.int64(14749), 10), (np.int64(14753), 12)]
-            self.blk.pmask = Mask.load_permanent_mask(self.blk)
-            return
 
         # Now figure out which observations we need.
         search_radius = Stn.sca_sidelength / np.sqrt(2.0) / Stn.degree \

@@ -158,7 +158,10 @@ class PyInSlice(InSlice):
             case "anlsim": inpsf_file = cfg.inpsf_path +\
                 "/psf_polyfit_{:d}.fits".format(self.idsca[0])
         with fits.open(inpsf_file) as f:
-            psfmodel = PyPSFModel(f[idsca[1]].data)
+            psfdata = f[idsca[1]].data
+        if cfg.inpsf_format == "anlsim":
+            psfdata /= cfg.inpsf_oversamp**2
+        psfmodel = PyPSFModel(psfdata)
         super().__init__(self.inimage.infile, psfmodel, loaddata, paddata)
 
     def load_wcs(self) -> None:
@@ -276,7 +279,8 @@ class PyOutSlice(OutSlice):
         if self.cfg.pad_sides == "none": 
             self.blk.outwcs.wcs.crpix -= self.cfg.postage_pad * self.cfg.n2
         super().__init__(self.blk.outwcs, inslices, timing)
-        self.obsdata, self.obslist = self.blk.obsdata, self.blk.obslist; del self.blk
+        self.obsdata = self.blk.obsdata; del self.blk
+        self.obslist = [inslice.idsca for inslice in self.inslices]
 
         ibx, iby = divmod(self.this_sub, self.cfg.nblock)
         self.filename = f"{self.cfg.outstem}_{ibx:02d}_{iby:02d}.fits"

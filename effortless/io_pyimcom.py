@@ -9,7 +9,7 @@ PyOutSlice : Output slice class for PyIMCOM.
 
 """
 
-import sys; sys.path.append("..")  # To import PyIMCOM.
+import sys; sys.path.append("..")  # To import PyIMCOM v1.0.3.
 
 import numpy as np
 from astropy.io import fits

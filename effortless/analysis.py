@@ -221,6 +221,17 @@ class StarsCal:
 
         if (not overwrite) and all(hasattr(self, attr) \
             for attr in ["cat_nm", "cat_el", "cal_nm", "cal_el"]):
+            # Still need obslist and ninslice, even if results exist.
+            with fits.open(self.get_outstem(self.band, True) +\
+                f"_{self.ibx:02d}_{self.iby:02d}.fits") as f:
+
+                # PyIMCOM may miss input images with very small overlaps.
+                if not hasattr(self, "obslist"):
+                    self.obslist = [(rec["obsid"], rec["sca"]) for rec in
+                                    f["INDATA"].data if rec["valid"]]
+                if not hasattr(self, "ninslice"):
+                    self.ninslice = len(self.obslist)
+
             return
 
         for nomask in [True, False]:

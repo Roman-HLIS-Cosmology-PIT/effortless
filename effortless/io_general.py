@@ -374,7 +374,7 @@ class OutSlice:
             Pixel coordinates of the reference pixel.
             If None, set to the center of the output slice.
         outcdelt : list[float, float], default: None
-            Pixel scale in degrees. If None, set to [CDELT, -CDELT].
+            Pixel scale in degrees. If None, set to [-CDELT, CDELT].
 
         Returns
         -------

@@ -247,6 +247,9 @@ class SubSlice:
         """Compute the Jacobian matrix of world coordinates
         with respect to pixel coordinates at given coordinates.
 
+        Note that the given coordinates should be in the original pixel plane,
+        not the shifted version due to `shrink` in `InSlice.assess_overlap`.
+
         Parameters
         ----------
         slice : "InSlice" or "OutSlice"
@@ -272,7 +275,7 @@ class SubSlice:
         ----------
         outslice : "OutSlice"
             Output slice object.
-        X, Y : int
+        X, Y : int, int
             Indices of the subslice in the output slice.
 
         Attributes
@@ -321,7 +324,7 @@ class SubSlice:
             psf_in = inslice.get_psf(*ctr_in)
             psf_out = PSFModel.psf_gaussian(sigma, dout_din=np.linalg.inv(
                 SubSlice.get_dworld_dpixel(self.outslice, *self.ctr)) @\
-                SubSlice.get_dworld_dpixel(inslice, *ctr_in))
+                SubSlice.get_dworld_dpixel(inslice, *(ctr_in+inslice.inxy_min)))
             # In principle we should flip the input PSF, but
             # in practice it is easier to flip the weight field.
             weight = PSFModel.get_weight_field(psf_in, psf_out, wd)[:0:-1, :0:-1].copy()
